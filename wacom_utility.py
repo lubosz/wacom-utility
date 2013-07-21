@@ -286,14 +286,12 @@ class Main:
 		if self.SelectedItem == "Welcome Screen":
 			# Place container for this screen
 			widget = wTree.get_widget("WelcomeScreen")
-			widget.reparent(self.window)
-			container.pack_end(widget)
+			widget.reparent(container)
 		
-		elif self.SelectedItem.lower().count("pad"):
+		elif "pad" in self.SelectedItem.lower():
 			# Place container for this screen
 			widget = wTree.get_widget("PadContainer")
-			widget.reparent(self.window)
-			container.pack_end(widget)
+			widget.reparent(container)
 
 			# Configures Pad Graphic
 			widget = Pad()
@@ -325,8 +323,7 @@ class Main:
 		elif self.SelectedItem == "options":
 			# Place container for this screen
 			widget = wTree.get_widget("OptionsContainer")
-			widget.reparent(self.window)
-			container.pack_end(widget)
+			widget.reparent(container)
 			# Configure events on options page
 			widget = wTree.get_widget("applyonstartup")
 			widget.set_active(self.ConfigureOnLogin)
@@ -334,8 +331,7 @@ class Main:
 		else:
 			# Place container for this screen
 			widget = wTree.get_widget("PressureContainer")
-			widget.reparent(self.window)
-			container.pack_end(widget)
+			widget.reparent(container)
 			self.PressureMachine = GraphicsTabletApplet(self.window, wTree, self.SelectedItem)
 			self.PressureMachine.Run()
 			
