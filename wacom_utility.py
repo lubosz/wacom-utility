@@ -288,13 +288,6 @@ class Main:
 			widget = wTree.get_widget("WelcomeScreen")
 			widget.reparent(self.window)
 			container.pack_end(widget)
-			
-			# Set donate button
-			widget = wTree.get_widget("donate-button")
-			imagewidget = wTree.get_widget("donate-button-image")
-			imagewidget.set_from_file("images/btn_donate_LG.png")
-			widget.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.HAND2))
-			widget.connect("button-press-event", self.do_donate)
 		
 		elif self.SelectedItem.lower().count("pad"):
 			# Place container for this screen
