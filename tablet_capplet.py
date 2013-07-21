@@ -407,9 +407,11 @@ class GraphicsTabletApplet:
 		self.DrawingArea.show()
 		self.DrawingTestFrame.add(self.DrawingArea)
 		
-		for i in range(0,len(gtk.gdk.devices_list())):
-			item = gtk.gdk.devices_list()[i].name
-			if item == Device:
+		devices = gtk.gdk.devices_list()
+
+		for i in range(0,len(devices)):
+			item = devices[i].name
+			if item in Device:
 				self.Device = i
 		self.DeviceMode = None
 		self.DeviceName = Device
