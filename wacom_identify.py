@@ -18,12 +18,12 @@ class TabletIdClass:
 			if item.count("iProduct"):	# Identify by model name
 				model = item.split(" ")[-1].replace("\n","")
 				tablet = self.IdentifyByModel(model)				
-				if tablet != None:
+				if tablet:
 					self.Tablets.append(tablet)
 			else:	# Identify by USB device code (more reliable)
-				code = item.split(" ")[5]
-				tablet = self.IdentifyByUSBId(code.split(":")[0], code.split(":")[1])				
-				if tablet != None:
+				code = item.split(" ")[5].split(":")
+				tablet = self.IdentifyByUSBId(code[0], code[1])
+				if tablet:
 					self.Tablets.append(tablet)
 		return self.Tablets
 		
@@ -33,6 +33,7 @@ class TabletIdClass:
 				return item
 				
 	def IdentifyByUSBId(self,VendId, DevId):
-		for item in self.TabletIds.Tablets:
-			if item.ProductId == int(DevId,16) and int(VendId,16) == int("056a",16):
-				return item
+		if int(VendId,16) == 0x56a:
+			for item in self.TabletIds.Tablets:
+				if item.ProductId == int(DevId,16):
+					return item
