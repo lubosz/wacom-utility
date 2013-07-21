@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # Import global modules
 # Dep: pygtk python-xml.dom.minidom wacom-tools
 
