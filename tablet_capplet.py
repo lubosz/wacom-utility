@@ -58,20 +58,13 @@ def SetClickForce(devicename, force):
 		return None
 
 def GetMode(devicename):
-
-	try:
-		output = subprocess.Popen(["xsetwacom", "get", devicename, "Mode"], stdout=subprocess.PIPE).communicate()[0]
-		return int(output.strip())
-	except:
-		return None
+	command = ["xsetwacom", "get", devicename, "Mode"]
+	output = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()[0]
+	return output.strip()
 
 def SetMode(devicename, m):
-
-	try:
-		output = subprocess.Popen(["xsetwacom", "set", devicename, "Mode", str(m)])
-		return int(output.strip())
-	except:
-		return None
+	command = ["xsetwacom", "set", devicename, "Mode", str(m)]
+	output = subprocess.Popen(command)
 
 class PressureCurveWidget(gtk.DrawingArea):
 	
@@ -456,7 +449,7 @@ class GraphicsTabletApplet:
 			return (0.0, 0.0)
 			
 	def ModeChanged(self, widget):
-		SetMode(self.DeviceName, widget.get_active())
+		SetMode(self.DeviceName, widget.get_active_text())
 	
 	def UpdateDeviceMode(self):
 		self.DeviceMode = GetMode(self.DeviceName)
@@ -464,7 +457,10 @@ class GraphicsTabletApplet:
 			self.DeviceModeCombo.set_sensitive(False)
 		else:
 			self.DeviceModeCombo.set_sensitive(True)
-			self.DeviceModeCombo.set_active(self.DeviceMode)
+			if self.DeviceMode == "Relative":
+				self.DeviceModeCombo.set_active(0)
+			elif self.DeviceMode == "Absolute":
+				self.DeviceModeCombo.set_active(1)
 	
 	def DeviceSelected(self, widget):
 		self.Device = widget.get_active()
