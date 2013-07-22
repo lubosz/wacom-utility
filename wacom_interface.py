@@ -4,16 +4,13 @@ from copy import copy
 from tablet_capplet import GetPressCurve, SetPressCurve, GetClickForce, SetClickForce
 
 class xSetWacom:
-	def __init__(self):
-		pass
-		
 	def ListInterfaces(self):
 		# List all input devices
-		data = os.popen("xsetwacom --list").readlines()
-		ret = []
-		for device in data:
-			ret.append(' '.join(device.strip().split(" ")[0:-1]))
-		return ret
+		devlist = os.popen("xsetwacom --list devices").readlines()
+		devices = []
+		for device in devlist:
+			devices.append(device.split("id:")[0].strip())
+		return devices
 
 	def ListModifiers(self):
 		# List all modification key commands
@@ -109,9 +106,10 @@ class xSetWacom:
 					commands.append("xsetwacom set '" + interface + "' " + button.Callsign + " \"" + result + "\"\n")
 			else:
 				points = GetPressCurve(interface)
-				if points: commands.append("xsetwacom set '" + interface + "' PressCurve " + str(points[0]) + " " + str(points[1]) + " " + str(points[2]) + " " + str(points[3]) + "\n")
+				if points:
+					commands.append("xsetwacom set '" + interface + "' PressureCurve " + str(points[0]) + " " + str(points[1]) + " " + str(points[2]) + " " + str(points[3]) + "\n")
 				result = GetClickForce(interface)
-				if result: commands.append("xsetwacom set '" + interface + "' ClickForce " + str(result) + "\n")
+				if result: commands.append("xsetwacom set '" + interface + "' Threshold " + str(result) + "\n")
 		# Save configuration to .xsession
 		f1 = open(os.path.expanduser("~/.wacom_utility"), 'a')
 		f1.writelines(commands)

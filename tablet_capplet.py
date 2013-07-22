@@ -23,39 +23,23 @@ import subprocess
 import math
 
 def GetPressCurve(devicename):
-
-	try:
-		output = subprocess.Popen(["xsetwacom", "-x", "get", devicename, "PressCurve"], stdout=subprocess.PIPE).communicate()[0]
-		bits = output.split()
-		if bits[1] == "\"PressCurve\"":
-			return [float(x.replace("\"","")) for x in bits[2:6]]
-	except:
-		return None
+	command = ["xsetwacom", "get", devicename, "PressureCurve"]
+	output = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()[0]
+	bits = output.strip().split()
+	return [float(x) for x in bits]
 
 def SetPressCurve(devicename, points):
-
-	try:
-		output = subprocess.Popen(["xsetwacom", "set", devicename, "PressCurve", str(points[0]), str(points[1]), str(points[2]), str(points[3])])
-	except:
-		return None
+	command = ["xsetwacom", "set", devicename, "PressureCurve", str(points[0]), str(points[1]), str(points[2]), str(points[3])]
+	output = subprocess.Popen(command)
 	
 def GetClickForce(devicename):
-
-	try:
-		output = subprocess.Popen(["xsetwacom", "get", devicename, "ClickForce"], stdout=subprocess.PIPE).communicate()[0]
-		if len(output.strip()) == 0:
-			return None
-		else:
-			return float(output.strip())
-	except:
-		return None
+	command = ["xsetwacom", "get", devicename, "Threshold"]
+	output = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()[0]
+	return float(output.strip())
 
 def SetClickForce(devicename, force):
-
-	try:
-		output = subprocess.Popen(["xsetwacom", "set", devicename, "ClickForce", str(force)])
-	except:
-		return None
+	command = ["xsetwacom", "set", devicename, "Threshold", str(force)]
+	output = subprocess.Popen(command)
 
 def GetMode(devicename):
 	command = ["xsetwacom", "get", devicename, "Mode"]
