@@ -425,10 +425,7 @@ class GraphicsTabletApplet:
 		try:
 			x = float(dev.get_axis(state[0], gtk.gdk.AXIS_XTILT))
 			y = float(dev.get_axis(state[0], gtk.gdk.AXIS_YTILT))
-			if x != x or y != y:
-				return (0.0, 0.0)
-			else:
-				return (x, y)
+			return (x, y)
 		except:
 			return (0.0, 0.0)
 			
@@ -471,4 +468,3 @@ class GraphicsTabletApplet:
 		else:
 			self.InLoop = 0
 
-################################################################################

@@ -80,13 +80,14 @@ class tablet:
 		self.Buttons = []
 		self.GraphicWidth = -1
 		
-		try:	# Attempt to load button map		
-
+		try:
+			# Attempt to load button map
 			XML = xml.dom.minidom.parse("images/pad/"+self.Model+".xml")
 		except:
 			return
-		# Load Custom Pad Descriptions
+
 		try:
+			# Load Custom Pad Descriptions
 			XBase = XML.getElementsByTagName("padsettings")
 			self.GraphicWidth = int(XBase[0].attributes["graphicwidth"].value)
 			XPlateau = XBase[0].getElementsByTagName("button")
@@ -100,7 +101,7 @@ class tablet:
 				Y2 = item.getElementsByTagName("y2")[0].childNodes[0].data
 				self.Buttons.append(button(XName, XNumber, XCallsign, int(X1), int(Y1), int(X2), int(Y2)))
 		except:
-			print "Error loading " + "images/pad/" + self.Model + ".xml"
+			print ("Error loading " + "images/pad/" + self.Model + ".xml")
 
 class button:
 	def __init__(self, Name, Number, Callsign, X1, Y1, X2, Y2):

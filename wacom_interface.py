@@ -97,7 +97,7 @@ class xSetWacom:
 		commands = []
 		# Generate commands based on current configuration
 		for interface in self.ListInterfaces():
-			if interface.lower().count("pad"):
+			if "pad" in interface.lower():
 				for button in Tablet.Buttons:
 					result = os.popen("xsetwacom get '" + interface + "' " + button.Callsign).read()
 					result = result.replace("\n","")
