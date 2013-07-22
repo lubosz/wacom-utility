@@ -26,6 +26,7 @@ class Pad(DrawingArea):
 			try:
 				os.stat(self.Image)
 			except:
+				print ("No image for %s pad" % self.Tablet.Model)
 				self.Image = ""
 			
 		else:
