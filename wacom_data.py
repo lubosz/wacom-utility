@@ -64,6 +64,7 @@ class TabletIdentities:
         self.Tablets.append(Tablet("PTK-640", "Wacom Intuos4 6x9", 0xB9))
         self.Tablets.append(Tablet("PTK-840", "Wacom Intuos4 8x13", 0xBA))
         self.Tablets.append(Tablet("PTK-1240", "Wacom Intuos4 12x19", 0xBB))
+        self.Tablets.append(Tablet("PTH-451", "Wacom Intuos5 Pro S", 0x314))
         self.Tablets.append(Tablet("CTH-460", "Wacom Bamboo Pen 6x4", 0xD1))
         self.Tablets.append(Tablet("CTH-461", "Wacom Bamboo Fun", 0xD2))
         self.Tablets.append(Tablet("CTH-661", "Wacom BambooFun 2FG 6x8", 0xD3))
