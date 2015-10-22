@@ -17,10 +17,9 @@ import gtk
 import gtk.glade
 import gobject
 import cairo
-import sys
-import os
 import subprocess
 import math
+
 
 def GetPressCurve(devicename):
     command = ["xsetwacom", "get", devicename, "PressureCurve"]
@@ -28,32 +27,36 @@ def GetPressCurve(devicename):
     bits = output.strip().split()
     return [float(x) for x in bits]
 
+
 def SetPressCurve(devicename, points):
     command = ["xsetwacom", "set", devicename, "PressureCurve", str(points[0]), str(points[1]), str(points[2]), str(points[3])]
     output = subprocess.Popen(command)
+
 
 def GetClickForce(devicename):
     command = ["xsetwacom", "get", devicename, "Threshold"]
     output = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()[0]
     return float(output.strip())
 
+
 def SetClickForce(devicename, force):
     command = ["xsetwacom", "set", devicename, "Threshold", str(force)]
     output = subprocess.Popen(command)
+
 
 def GetMode(devicename):
     command = ["xsetwacom", "get", devicename, "Mode"]
     output = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()[0]
     return output.strip()
 
+
 def SetMode(devicename, m):
     command = ["xsetwacom", "set", devicename, "Mode", str(m)]
     output = subprocess.Popen(command)
 
+
 class PressureCurveWidget(gtk.DrawingArea):
-
     def __init__(self):
-
         gtk.DrawingArea.__init__(self)
 
         self.Points = [0,100,100,0]
@@ -86,11 +89,11 @@ class PressureCurveWidget(gtk.DrawingArea):
         self.DeviceName = name
         self.ClickForce = GetClickForce(name)
 
-        if self.ClickForce != None:
+        if self.ClickForce:
             self.ClickForce *= (100.0 / 19.0)
 
         points = GetPressCurve(name)
-        if points == None:
+        if not points:
             self.Points = None
         else:
             self.Points = [points[0], 100.0 - points[1], points[2], 100.0 - points[3]]
@@ -109,35 +112,29 @@ class PressureCurveWidget(gtk.DrawingArea):
             return v
 
     def ConfigureEvent(self, widget, event):
-
         self.WindowSize = self.window.get_size()
-        self.Scale = ((self.WindowSize[0] - self.ControlPointDiameter) / 100.0, (self.WindowSize[1] - self.ControlPointDiameter) / 100.0)
+        self.Scale = ((self.WindowSize[0] - self.ControlPointDiameter)/ 100.0, (self.WindowSize[1] - self.ControlPointDiameter) / 100.0)
 
     def MotionEvent(self, widget, event):
-
         pos = event.get_coords()
         pos = (pos[0] / self.Scale[0], pos[1] / self.Scale[1])
 
-        if self.Points == None:
+        if not self.Points:
             return
 
         if self.DraggingCP1:
-            
             self.Points[0] = self.ClampValue(pos[0])
             self.Points[1] = self.ClampValue(pos[1])
 
         elif self.DraggingCP2:
-
             self.Points[2] = self.ClampValue(pos[0])
             self.Points[3] = self.ClampValue(pos[1])
 
         elif self.DraggingCF:
-
             self.ClickForce = int(self.ClampValue(pos[0]) / (100.0 / 19)) * (100.0 / 19)
 
     def ButtonPress(self, widget, event):
-
-        if self.Points == None:
+        if not self.Points:
             return
 
         if self.DraggingCP1 or self.DraggingCP2 or self.DraggingCF:
@@ -146,31 +143,25 @@ class PressureCurveWidget(gtk.DrawingArea):
             pos = event.get_coords()
             pos = (pos[0] / self.Scale[0], pos[1] / self.Scale[1])
 
-            if pos[0] > (self.Points[0] - self.ControlPointDiameter) and pos[0] < (self.Points[0] + self.ControlPointDiameter):
-
-                if pos[1] > (self.Points[1] - self.ControlPointDiameter) and pos[1] < (self.Points[1] + self.ControlPointDiameter):
-
+            if (self.Points[0] - self.ControlPointDiameter) < pos[0] < (self.Points[0] + self.ControlPointDiameter):
+                if (self.Points[1] - self.ControlPointDiameter) < pos[1] < (self.Points[1] + self.ControlPointDiameter):
                     self.DraggingCP1 = True
                     return
 
-            if pos[0] > self.Points[2] - self.ControlPointDiameter and pos[0] < self.Points[2] + self.ControlPointDiameter:
-
-                if pos[1] > self.Points[3] - self.ControlPointDiameter and pos[1] < self.Points[3] + self.ControlPointDiameter:
-
+            if self.Points[2] - self.ControlPointDiameter < pos[0] < self.Points[2] + self.ControlPointDiameter:
+                if self.Points[3] - self.ControlPointDiameter < pos[1] < self.Points[3] + self.ControlPointDiameter:
                     self.DraggingCP2 = True
                     return
 
-            if pos[0] > self.ClickForce - self.ControlPointDiameter and pos[0] < self.ClickForce + self.ControlPointDiameter:
-
+            if self.ClickForce - self.ControlPointDiameter < pos[0] < self.ClickForce + self.ControlPointDiameter:
                 self.DraggingCF = True
                 return
 
     def ButtonRelease(self, widget, event):
-
         self.DragFinished()
 
     def DragFinished(self):
-        if self.Points != None:
+        if self.Points:
             if self.DraggingCP1:	# Update to new curve constraints
                 self.Points[3] = self.Points[0]
                 self.Points[2] = self.Points[1]
@@ -180,10 +171,9 @@ class PressureCurveWidget(gtk.DrawingArea):
             print (int(self.Points[0]), int(100.5 - self.Points[1]), int(self.Points[2]), int(100.5 - self.Points[3]))
 
             SetPressCurve(self.DeviceName, [int(self.Points[0]+.5), int(100.5 - self.Points[1]), int(self.Points[2]+.5), int(100.5 - self.Points[3])])
-        if self.ClickForce != None:
+        if self.ClickForce:
             SetClickForce(self.DeviceName, int(self.ClickForce / (100.0 / 19.0)) + 1)
         self.DraggingCP1 = self.DraggingCP2 = self.DraggingCF = False
-
 
     def ExposeEvent(self, widget, event):
         cr = widget.window.cairo_create()
@@ -207,8 +197,7 @@ class PressureCurveWidget(gtk.DrawingArea):
         cr.restore()
         cr.stroke()
 
-        if self.Pressure != None:
-
+        if self.Pressure:
             # Linear Line
             cr.set_line_width(1.0)
 
@@ -221,8 +210,7 @@ class PressureCurveWidget(gtk.DrawingArea):
             cr.stroke()
 
             # Click Force
-
-            if self.ClickForce != None:
+            if self.ClickForce:
                 cr.set_line_width(1.0)
                 cr.set_source_rgba(1.0, 0.0, 0.0, 0.25)
                 cr.save()
@@ -233,8 +221,7 @@ class PressureCurveWidget(gtk.DrawingArea):
                 cr.restore()
                 cr.stroke()
 
-
-            if self.Points == None:
+            if self.Points:
                 points = [0.0, 100.0, 100.0, 0.0]
             else:
                 points = self.Points
@@ -263,7 +250,7 @@ class PressureCurveWidget(gtk.DrawingArea):
             cr.restore()
             cr.stroke()
 
-            if self.Points != None:
+            if self.Points:
                 # Control Lines
                 cr.set_line_width(2.0)
                 cr.set_source_rgba(0.0, 0.0, 0.0, 0.5)
@@ -279,12 +266,12 @@ class PressureCurveWidget(gtk.DrawingArea):
                 # Control Points
                 cr.set_line_width(2.0)
                 cr.save()
-                cr.arc(self.Points[0] * self.Scale[0], self.Points[1] * self.Scale[1], self.Radius, 0.0, 2.0 * math.pi);
+                cr.arc(self.Points[0] * self.Scale[0], self.Points[1] * self.Scale[1], self.Radius, 0.0, 2.0 * math.pi)
                 cr.set_source_rgba(237.0 / 255.0, 212.0 / 255.0, 0.0, 0.5)
                 cr.fill_preserve()
                 cr.set_source_rgba(239.0 / 255.0, 41.0 / 255.0, 41.0 / 255.0, 1.0)
                 cr.stroke()
-                cr.arc(self.Points[2] * self.Scale[0], self.Points[3] * self.Scale[1], self.Radius, 0.0, 2.0 * math.pi);
+                cr.arc(self.Points[2] * self.Scale[0], self.Points[3] * self.Scale[1], self.Radius, 0.0, 2.0 * math.pi)
                 cr.set_source_rgba(237.0 / 255.0, 212.0 / 255.0, 0.0, 0.5)
                 cr.fill_preserve()
                 cr.set_source_rgba(239.0 / 255.0, 41.0 / 255.0, 41.0 / 255.0, 1.0)
@@ -292,10 +279,9 @@ class PressureCurveWidget(gtk.DrawingArea):
                 cr.restore()
         cr.restore()
 
+
 class DrawingTestWidget(gtk.DrawingArea):
-
     def __init__(self):
-
         gtk.DrawingArea.__init__(self)
 
         self.Device = 0
@@ -315,7 +301,6 @@ class DrawingTestWidget(gtk.DrawingArea):
         self.set_size_request(100,100)
 
     def ConfigureEvent(self, widget, event):
-
         self.WindowSize = self.window.get_size()
         self.Raster = self.window.cairo_create().get_target().create_similar(cairo.CONTENT_COLOR, self.WindowSize[0], self.WindowSize[1])
         self.RasterCr = cairo.Context(self.Raster)
@@ -329,16 +314,15 @@ class DrawingTestWidget(gtk.DrawingArea):
         return dev.get_axis(state[0], gtk.gdk.AXIS_PRESSURE)
 
     def MotionEvent(self, widget, event):
-
         if self.Drawing:
             pos = event.get_coords()
             p = self.GetPressure()
-            if p == None:
+            if not p:
                 p = 0.0
-            r =  p * 50 + 5
+            r = p * 50 + 5
             self.RasterCr.set_line_width(2)
             self.RasterCr.set_source_rgba(p, 1.0, 0.0, 0.5)
-            self.RasterCr.arc(pos[0], pos[1],r, 0.0, 2 * math.pi);
+            self.RasterCr.arc(pos[0], pos[1], r, 0.0, 2 * math.pi)
             self.RasterCr.fill_preserve()
             self.RasterCr.set_source_rgba(0.5, 0.2, p, 0.5)
             self.RasterCr.stroke()
@@ -347,11 +331,9 @@ class DrawingTestWidget(gtk.DrawingArea):
             self.window.invalidate_region(reg, False)
 
     def ButtonPress(self, widget, event):
-
         self.Drawing = True
 
     def ButtonRelease(self, widget, event):
-
         self.Drawing = False
 
     def ExposeEvent(self, widget, event):
@@ -363,11 +345,11 @@ class DrawingTestWidget(gtk.DrawingArea):
         cr.rectangle(0.0, 0.0, self.WindowSize[0], self.WindowSize[1])
         cr.stroke()
 
-class GraphicsTabletApplet:
 
+class GraphicsTabletApplet:
     def __init__(self, window, wTree, Device):
-        self.Active = 0	# Control
-        self.InLoop = 0 # Flag
+        self.Active = 0  # Control
+        self.InLoop = 0  # Flag
         self.WidgetTree = wTree
         self.MainWindow = window
         self.DrawingTestFrame = self.WidgetTree.get_widget("drawingalignment")
@@ -415,7 +397,7 @@ class GraphicsTabletApplet:
     def GetPressure(self):
         dev = gtk.gdk.devices_list()[self.Device]
         if not isinstance(self.DrawingArea.window, gtk.gdk.Window):
-            return (0.0, 0.0)
+            return 0.0, 0.0
         state = dev.get_state(self.DrawingArea.window)
         return dev.get_axis(state[0], gtk.gdk.AXIS_PRESSURE)
 
@@ -425,16 +407,16 @@ class GraphicsTabletApplet:
         try:
             x = float(dev.get_axis(state[0], gtk.gdk.AXIS_XTILT))
             y = float(dev.get_axis(state[0], gtk.gdk.AXIS_YTILT))
-            return (x, y)
+            return x, y
         except:
-            return (0.0, 0.0)
+            return 0.0, 0.0
 
     def ModeChanged(self, widget):
         SetMode(self.DeviceName, widget.get_active_text())
 
     def UpdateDeviceMode(self):
         self.DeviceMode = GetMode(self.DeviceName)
-        if self.DeviceMode == None:
+        if not self.DeviceMode:
             self.DeviceModeCombo.set_sensitive(False)
         else:
             self.DeviceModeCombo.set_sensitive(True)
@@ -452,7 +434,7 @@ class GraphicsTabletApplet:
 
     def Update(self):
         p = self.GetPressure()
-        if p == None:
+        if not p:
             self.Curve.Pressure = None
             self.Curve.Update()
         else:

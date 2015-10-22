@@ -4,11 +4,7 @@
 
 import sys
 import gtk
-import pygtk
-import gobject
 import gtk.glade
-import cairo
-import pango
 import os
 import gc
 from copy import copy
@@ -16,11 +12,12 @@ from copy import copy
 # Import local modules
 
 from wacom_identify import TabletIdClass
-from wacom_interface import xSetWacom
+from wacom_interface import XSetWacom
 import wacom_xorg
 from dialogbox import DialogBox
 from cairo_framework import Pad
 from tablet_capplet import GraphicsTabletApplet
+
 
 class Main:
     def __init__(self):
@@ -28,17 +25,17 @@ class Main:
         os.chdir(os.path.dirname(os.path.abspath(sys.argv[0])))
         # Check command line args
         for item in sys.argv:
-            if item=="--configure" or item=="-c":
+            if item == "--configure" or item == "-c":
                 f1 = open(os.path.expanduser("~/.wacom_utility"), 'r')
                 data = f1.readlines()
                 f1.close()
-                for line in data:	# Check that we are running this stuff on startup
+                for line in data:  # Check that we are running this stuff on startup
                     if line[0] != "#":
                         if line.split("=")[0] == "configureonlogin":
                             self.ConfigureOnLogin = int(line.split("=")[1])
                 if self.ConfigureOnLogin == 1:
                     for line in data:
-                        if line.count("=")==0 and line[0] != "#":
+                        if line.count("=") == 0 and line[0] != "#":
                             os.popen(line)
                 sys.exit()
 
@@ -48,8 +45,8 @@ class Main:
 
         # Identify Wacom Product
         self.TabletIdObject = TabletIdClass()
-        self.xSetWacomObject = xSetWacom()
-        self.Tablets = self.TabletIdObject.Identify()
+        self.xSetWacomObject = XSetWacom()
+        self.Tablets = self.TabletIdObject.identify()
         self.Tablet=None
         # Load configuration file
         self.SaveConfig = 1
@@ -70,7 +67,7 @@ class Main:
                 if line.split("=")[0] == "configureonlogin":
                     self.ConfigureOnLogin = int(line.split("=")[1])
                 elif line.split("=")[0] == "forcemodel":
-                    self.Tablets = self.TabletIdObject.Identify(line.split("=")[1].replace("\"","").replace("\'","").replace("\n",""))
+                    self.Tablets = self.TabletIdObject.identify(line.split("=")[1].replace("\"","").replace("\'","").replace("\n",""))
 
         # If no tablets identified
         if len(self.Tablets) == 0:
@@ -114,7 +111,6 @@ class Main:
             f1.writelines("X-GNOME-Autostart-enabled=true\n")
             f1.close()
 
-
         # Set the first tablet discovered to be the configured device
         self.Tablet = self.Tablets[0]
         # Configure Window
@@ -135,7 +131,7 @@ class Main:
         widget.set_label(self.Tablet.Name)
 
         # Set up treeview list for input devices
-        devices = self.xSetWacomObject.ListInterfaces()
+        devices = self.xSetWacomObject.listInterfaces()
         widget = self.wTree.get_widget("input-list")
         widget.connect("cursor-changed",self.SelectDevice)
         list = gtk.ListStore(str)
@@ -153,7 +149,7 @@ class Main:
         widget = self.wTree.get_widget("availkeys")
         list = gtk.ListStore(str, str)
         widget.set_model(list)
-        data = self.xSetWacomObject.ListModifiers()
+        data = self.xSetWacomObject.listModifiers()
         for item in data:
             list.append(item)
         celltext = gtk.CellRendererText()
@@ -175,7 +171,7 @@ class Main:
         widget = self.wTree.get_widget("MouseConfig")
         list = gtk.ListStore(str, str)
         widget.set_model(list)
-        data = self.xSetWacomObject.ListMouseActions()
+        data = self.xSetWacomObject.listMouseActions()
         for item in data:
             list.append(item)
         celltext = gtk.CellRendererText()
@@ -196,11 +192,6 @@ class Main:
 
         gtk.main()
 
-    def do_donate(self,w,e):
-        import os
-        os.system("gnome-open \"https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=YYBBSPYDAA7V8&lc=CA&item_name=Wacom%20Control%20Panel&currency_code=CAD&bn=PP%2dDonationsBF%3abtn_donate_LG%2egif%3aNonHosted\"")
-
-
     def Create_Window(self):
         # Create widgets
         self.wTree = gtk.glade.XML("wacom_utility.glade")
@@ -217,34 +208,34 @@ class Main:
         self.SelectedItem = "Welcome Screen"
         self.ChangeScreen()
 
-    def Help(self,widget,event,page):
-        #Page = 1: Main help
-        #Page = 2: Pad settings help
+    def Help(self, widget, event, page):
+        # Page = 1: Main help
+        # Page = 2: Pad settings help
         # Fixme: help not yet implamented
         os.system("/bin/sh -c \"gnome-open 'http://www.gtk-apps.org/content/show.php/Wacom+Control+Panel?content=104309'\"")
 
-    def Close(self, widget=None,event=None):
+    def Close(self, widget, event):
         if self.SaveConfig == 1:
             if self.Tablet:
-                self.xSetWacomObject.SaveToXSession(self.Tablet)
+                self.xSetWacomObject.saveToXSession(self.Tablet)
         else:
-            self.xSetWacomObject.PurgeXSession()
+            self.xSetWacomObject.purgeXSession()
         gtk.main_quit()
 
-    def CheckBoxClick(self,widget,setting):
+    def CheckBoxClick(self, widget,setting):
         value = int(widget.get_active())
-        self.ChangeSetting(setting,value)
+        self.ChangeSetting(setting, value)
 
-    def ChangeSetting(self,setting,value):
-        if setting==1:
-            self.ChangeSettingFile("configureonlogin",value)
-            self.ConfigureOnLogin=value
-        elif setting==2:
+    def ChangeSetting(self, setting, value):
+        if setting == 1:
+            self.ChangeSettingFile("configureonlogin", value)
+            self.ConfigureOnLogin = value
+        elif setting == 2:
             wacom_xorg.SetXorgConfig(value)
             self.DialogBox.NewMessage("You need to log out and log back in again for the new configuration to take effect.\n\nA backup has been made in your home directory.","Wacom Control Panel")
             self.ChangeScreen()
 
-    def ChangeSettingFile(self,setting,value):
+    def ChangeSettingFile(self, setting, value):
         # Purges .wacom_utility file of any previous configuration and updates new
         try:
             os.stat(os.path.expanduser("~/.wacom_utility"))
@@ -268,7 +259,6 @@ class Main:
         activerow = Index[0][0]
         self.SelectedItem = Dataset[activerow][0]
         self.ChangeScreen()
-
 
     def ChangeScreen(self):
         container = self.wTree.get_widget("mainbox")
@@ -295,7 +285,7 @@ class Main:
 
             # Configures Pad Graphic
             widget = Pad()
-            widget.Set_Parameters(self.Tablet)
+            widget.set_parameters(self.Tablet)
             widget.set_size_request(self.Tablet.GraphicWidth,-1)
             container = wTree.get_widget("padbox")
             container.pack_start(widget)
@@ -310,7 +300,7 @@ class Main:
                 widget1.set_markup("<span foreground='#000000' font_desc='sans 18' stretch='normal' weight='normal'>"+str(item.Number)+"</span>")
 
                 widget2 = gtk.Label(item.Name)
-                widget3 = gtk.Label(self.xSetWacomObject.GetTypeAndName(self.SelectedItem, item.Callsign)[1])
+                widget3 = gtk.Label(self.xSetWacomObject.getTypeAndName(self.SelectedItem, item.Callsign)[1])
                 widget4 = gtk.Button(stock="gtk-edit")
                 widget4.connect("button-press-event",self.ShowModWindow, item)
                 placeholder.pack_start(widget1,0,0,4)
@@ -335,15 +325,16 @@ class Main:
             self.PressureMachine = GraphicsTabletApplet(self.window, wTree, self.SelectedItem)
             self.PressureMachine.Run()
 
-    def ShowModWindow(self,widget,event, button):
+    def ShowModWindow(self, widget, event, button):
         a = ModifyAction(self.Tablet,self.wTree,self.SelectedItem, button, self.xSetWacomObject)
         self.ChangeScreen()
         # Ensures no memory leaks
         del a
         gc.collect()
 
+
 class ModifyAction:
-    def __init__(self,Tablet, wTree, Device, Button, xSetWacomObject):
+    def __init__(self, Tablet, wTree, Device, Button, xSetWacomObject):
         self.Tablet = Tablet
         self.SelectedItem = Device
         self.wTree = wTree
@@ -383,10 +374,10 @@ class ModifyAction:
         widget1.set_active(False)
         widget2.set_active(False)
 
-        if self.xSetWacomObject.GetTypeAndName(self.SelectedItem,self.Button.Callsign)[0] == 0:
+        if self.xSetWacomObject.getTypeAndName(self.SelectedItem, self.Button.Callsign)[0] == 0:
             widget0.set_active(True)
             self.UpdateActiveRegion(0)
-        elif self.xSetWacomObject.GetTypeAndName(self.SelectedItem,self.Button.Callsign)[0] == 1:
+        elif self.xSetWacomObject.getTypeAndName(self.SelectedItem, self.Button.Callsign)[0] == 1:
             widget1.set_active(True)
             self.UpdateActiveRegion(1)
             self.UpdateForm()
@@ -399,7 +390,7 @@ class ModifyAction:
         self.window.show_all()
         gtk.main()
 
-    def ChangeState(self,widget):
+    def ChangeState(self, widget):
         if widget == self.wTree.get_widget("rb1"):
             self.UpdateActiveRegion(0)
         elif widget == self.wTree.get_widget("rb2"):
@@ -407,20 +398,20 @@ class ModifyAction:
         else:
             self.UpdateActiveRegion(2)
 
-    def AddMod(self,widget,event):
+    def AddMod(self, widget, event):
         widget = self.wTree.get_widget("availkeys")
         widget2 = self.wTree.get_widget("ModifyAction")
         widget2.set_text(widget.get_model()[widget.get_active()][0]+" "+widget2.get_text())
         self.CheckValidity(widget2)
 
-    def CheckValidity(self,widget):
+    def CheckValidity(self, widget):
         notice = self.wTree.get_widget("isvalid")
-        if self.xSetWacomObject.VerifyString(widget.get_text())==1:
+        if self.xSetWacomObject.verifyString(widget.get_text()) == 1:
             notice.hide()
         else:
             notice.show()
 
-    def UpdateActiveRegion(self,index):
+    def UpdateActiveRegion(self, index):
         #0 = Ign
         #1 = Mouse
         #2 = Kbd
@@ -441,31 +432,31 @@ class ModifyAction:
             widget.set_sensitive(True)
 
     def UpdateForm(self):
-        if self.xSetWacomObject.GetTypeAndName(self.SelectedItem,self.Button.Callsign)[0] == 0:
+        if self.xSetWacomObject.getTypeAndName(self.SelectedItem,self.Button.Callsign)[0] == 0:
             pass
-        elif self.xSetWacomObject.GetTypeAndName(self.SelectedItem,self.Button.Callsign)[0] == 1:
+        elif self.xSetWacomObject.getTypeAndName(self.SelectedItem,self.Button.Callsign)[0] == 1:
             widget = self.wTree.get_widget("MouseConfig")
             i = 0
             for item in widget.get_model():
-                if item[1] == self.xSetWacomObject.GetTypeAndName(self.SelectedItem,self.Button.Callsign)[1]:
+                if item[1] == self.xSetWacomObject.getTypeAndName(self.SelectedItem,self.Button.Callsign)[1]:
                     widget.set_active(i)
-                i+=1
+                i += 1
         else:
             widget = self.wTree.get_widget("ModifyAction")
-            widget.set_text(self.xSetWacomObject.GetTypeAndName(self.SelectedItem,self.Button.Callsign)[1])
+            widget.set_text(self.xSetWacomObject.getTypeAndName(self.SelectedItem,self.Button.Callsign)[1])
 
     def CommitChanges(self):
-        if self.wTree.get_widget("rb1").get_active() == True:
-            self.xSetWacomObject.SetByTypeAndName(self.SelectedItem,0,self.Button.Callsign)
-        elif self.wTree.get_widget("rb2").get_active() == True:
+        if self.wTree.get_widget("rb1").get_active():
+            self.xSetWacomObject.setByTypeAndName(self.SelectedItem,0,self.Button.Callsign)
+        elif self.wTree.get_widget("rb2").get_active():
             widget = self.wTree.get_widget("MouseConfig")
-            self.xSetWacomObject.SetByTypeAndName(self.SelectedItem,1,self.Button.Callsign,widget.get_model()[widget.get_active()][1])
+            self.xSetWacomObject.setByTypeAndName(self.SelectedItem,1,self.Button.Callsign,widget.get_model()[widget.get_active()][1])
         else:
             widget = self.wTree.get_widget("ModifyAction")
-            if self.xSetWacomObject.VerifyString(widget.get_text())==1:
-                self.xSetWacomObject.SetByTypeAndName(self.SelectedItem,2,self.Button.Callsign,widget.get_text())
+            if self.xSetWacomObject.verifyString(widget.get_text())==1:
+                self.xSetWacomObject.setByTypeAndName(self.SelectedItem,2,self.Button.Callsign,widget.get_text())
 
-    def close(self,widget, event):
+    def close(self, widget, event):
         self.CommitChanges()
         # Unlink all gtk events or python will not allow this object
         # to be destroyed, as there are events linked into this object's
@@ -476,6 +467,5 @@ class ModifyAction:
         self.window.hide()
 
 
-
-if __name__=="__main__":
+if __name__ == "__main__":
     Main()

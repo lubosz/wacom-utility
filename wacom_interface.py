@@ -1,11 +1,11 @@
 # xsetwacom interface
 import os
 from copy import copy
-from tablet_capplet import GetPressCurve, SetPressCurve, GetClickForce, SetClickForce
+from tablet_capplet import GetPressCurve, GetClickForce
 
 
-class xSetWacom:
-    def ListInterfaces(self):
+class XSetWacom:
+    def listInterfaces(self):
         # List all input devices
         devlist = os.popen("xsetwacom --list devices").readlines()
         devices = []
@@ -13,7 +13,7 @@ class xSetWacom:
             devices.append(device.split("id:")[0].strip())
         return devices
 
-    def ListModifiers(self):
+    def listModifiers(self):
         # List all modification key commands
         data = open("keymap.txt", "r").readlines()
         ret = []
@@ -22,25 +22,25 @@ class xSetWacom:
                 ret.append([item.split("\t")[0],"".join(item.split("\t")[1:]).replace("\n","")])
         return ret
 
-    def GetConfiguration(self, device, function):
+    def getConfiguration(self, device, function):
         data = os.popen("xsetwacom get '" + device + "' " + function).read()
         return data.replace("\n", "")
 
-    def GetTypeAndName(self, device, function):
+    def getTypeAndName(self, device, function):
         # 0 = Ign
         # 1 = Mouse
         # 2 = Key
-        data = self.GetConfiguration(device,function)
+        data = self.getConfiguration(device,function)
         if data == "0":
             return 0, "Ignore"
         elif data[0:8].upper() == "DBLCLICK":
             return 1, "Double Click"
         elif len(data) == 1 and int(data) > 0:
-            return 1, self.LookUpMouseButton(int(data))
+            return 1, self.lookUpMouseButton(int(data))
         else:
             return 2, data.replace("CORE KEY ", "")
 
-    def LookUpMouseButton(self,button):
+    def lookUpMouseButton(self,button):
         if button == 1:
             return "Left Click"
         elif button == 2:
@@ -54,22 +54,22 @@ class xSetWacom:
         else:
             return str(button)
 
-    def LookUpMouseName(self,name):
-        for item in self.ListMouseActions():
+    def lookUpMouseName(self,name):
+        for item in self.listMouseActions():
             if item[1] == name:
                 return item[0]
         return "0"
 
-    def ListMouseActions(self):
+    def listMouseActions(self):
         return [["button 1","Left Click"],["button 2","Right Click"],["button 3","Middle Click"],["button 4","Scroll Wheel Up"],["button 5","Scroll Wheel Down"],["DBLCLICK 1","Double Click"]]
 
-    def SetByTypeAndName(self,device,type,object,name=""):
+    def setByTypeAndName(self,device,type,object,name=""):
         # 0 = ign | 1 = Mouse | 2 = Keybd | 3 = TPCButton (name=on/off)
 
         if type == 0:
             function = "0"
         elif type == 1:
-            function = "\'" + self.LookUpMouseName(name) + "\'"
+            function = "\'" + self.lookUpMouseName(name) + "\'"
         elif type == 2:
             function = "\"CORE KEY " + name + "\""
         elif type == 3:
@@ -77,33 +77,32 @@ class xSetWacom:
         print ("xsetwacom set '" + device + "' " + object + " " + function)
         result = os.popen("xsetwacom set '" + device + "' " + object + " " + function).read()
 
-
-    def VerifyString(self,string):
+    def verifyString(self,string):
         result = 1
         if string.count("\'") + string.count("\"") + string.count("\\") + string.count("\t") > 0:
             result = 0
         for item in string.split(" "):
             if len(item) > 1:
                 ver = 0
-                for litem in self.ListModifiers():
+                for litem in self.listModifiers():
                     if item.upper() == litem[0].upper():
                         ver = 1
                 if ver == 0:
                     result = 0
         return result
 
-    def SaveToXSession(self, Tablet):
+    def saveToXSession(self, Tablet):
         # Saves configuration so it runs on startup
-        self.PurgeXSession()
+        self.purgeXSession()
         commands = []
         # Generate commands based on current configuration
-        for interface in self.ListInterfaces():
+        for interface in self.listInterfaces():
             if "pad" in interface.lower():
                 for button in Tablet.Buttons:
                     result = os.popen("xsetwacom get '" + interface + "' " + button.Callsign).read()
                     result = result.replace("\n","")
                     if len(result) == 1:
-                        result = self.LookUpMouseName(self.LookUpMouseButton(int(result)))
+                        result = self.lookUpMouseName(self.lookUpMouseButton(int(result)))
                     commands.append("xsetwacom set '" + interface + "' " + button.Callsign + " \"" + result + "\"\n")
             else:
                 points = GetPressCurve(interface)
@@ -116,8 +115,7 @@ class xSetWacom:
         f1.writelines(commands)
         f1.close()
 
-
-    def PurgeXSession(self):
+    def purgeXSession(self):
         # Purges .wacom_utility file of any previous configuration
         try:
             os.stat(os.path.expanduser("~/.wacom_utility"))

@@ -4,52 +4,50 @@ import gtk
 import cairo
 import os
 
+
 class DrawingArea(gtk.DrawingArea):
-    __gsignals__ = { "expose-event": "override" }
+    __gsignals__ = {"expose-event": "override"}
+
     def do_expose_event(self, event):
-
         cr = self.window.cairo_create()
-
-        cr.rectangle(event.area.x, event.area.y,
-                event.area.width, event.area.height)
+        cr.rectangle(event.area.x, event.area.y, event.area.width, event.area.height)
         cr.clip()
 
         self.draw(cr, *self.window.get_size())
 
-class Pad(DrawingArea):
 
-    def Set_Parameters(self,tablet=None):
-        self.Tablet = tablet
-        if self.Tablet:
-            self.ButtonMap = self.Tablet.Buttons
-            self.Image = "images/pad/" + self.Tablet.Model + ".png"
+class Pad(DrawingArea):
+    def set_parameters(self, tablet=None):
+        self.tablet = tablet
+        if self.tablet:
+            self.button_map = self.tablet.Buttons
+            self.image = "images/pad/" + self.tablet.Model + ".png"
             try:
-                os.stat(self.Image)
+                os.stat(self.image)
             except:
-                print ("No image for %s pad" % self.Tablet.Model)
-                self.Image = ""
+                print ("No image for %s pad" % self.tablet.Model)
+                self.image = ""
 
         else:
-            self.ButtonMap = []
-            self.Image = ""
+            self.button_map = []
+            self.image = ""
 
     def draw(self, cr, width, height):
-
         cr.set_source_rgb(0.5, 0.5, 0.5)
         cr.rectangle(0, 0, width, height)
         cr.fill()
 
-        if self.Image:
+        if self.image:
             # Draw background image
-            cr.set_source_surface(cairo.ImageSurface.create_from_png(self.Image))
+            cr.set_source_surface(cairo.ImageSurface.create_from_png(self.image))
             cr.paint()
 
-        if self.ButtonMap != []:
+        if self.button_map:
             # Paint on buttons
             cr.select_font_face("Sans",cairo.FONT_SLANT_NORMAL,cairo.FONT_WEIGHT_BOLD)
             cr.set_font_size(18)
 
-            for button in self.ButtonMap:
+            for button in self.button_map:
                 cr.set_source_rgba(1,1,1,1)
                 choffset = len(str(button.Number)) * 6
                 cr.move_to(int((button.X1+button.X2)/2)-choffset,int((button.Y1+button.Y2)/2)+6)

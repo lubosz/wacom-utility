@@ -4,23 +4,23 @@
 from copy import copy
 import os
 
+
 def SetXorgConfig(value):
     CheckXorgConf()
     f1 = open("/etc/X11/xorg.conf", 'r')
     data = f1.readlines()
     f1.close()
 
-    if value==0:		# Remove custom configuration
-        exclusion = []	# Line numbers to exclude
+    if value == 0:		# Remove custom configuration
+        exclusion = []  # Line numbers to exclude
         for item in data:
             exclusion.append(0)
 
-
-        for i in range(0,len(data)):
+        for i in range(0, len(data)):
             line = data[i]
-            line = line.split("#")[0]	# Remove commenting from analysis
+            line = line.split("#")[0]  # Remove commenting from analysis
             if StdParse(line).count("section\"inputdevice\""):
-                State = 0	# State triggers if it's a wacom configuration
+                State = 0  # State triggers if it's a wacom configuration
                 for subline in data[i+1:]:
                     if StdParse(subline).count("driver\"wacom\""):
                         State = 1
@@ -28,7 +28,7 @@ def SetXorgConfig(value):
                         break
                 # If State = 1, mark all lines until next endsection
                 if State == 1:
-                    for j in range(i,len(data)):
+                    for j in range(i, len(data)):
                         subline = data[j]
                         exclusion[j] = 1
                         if StdParse(subline).count("endsection"):
@@ -36,7 +36,7 @@ def SetXorgConfig(value):
             # Remove all entries from serverlayout
             if StdParse(line).count("section\"serverlayout\""):
                 for device in CheckXorgConfig()[1]:
-                    for j in range(i+1,len(data)):
+                    for j in range(i+1, len(data)):
                         subline = data[j]
                         if StdParse(subline).count("endsection"):
                             break
@@ -44,21 +44,21 @@ def SetXorgConfig(value):
                             exclusion[j] = 1
             # Compile the new file
             newdata = []
-            for i in range(0,len(data)):
-                if exclusion[i]==0:
+            for i in range(0, len(data)):
+                if exclusion[i] == 0:
                     newdata.append(data[i])
-    elif value==1:
+    elif value == 1:
         newdata = copy(data)
         hasserverlayout = 0
-        for i in range(0,len(data)):
+        for i in range(0, len(data)):
             line = data[i]
-            line = line.split("#")[0]	# Remove commenting from analysis
+            line = line.split("#")[0]  # Remove commenting from analysis
             if StdParse(line).count("section\"serverlayout\""):
                 hasserverlayout = 1
                 q = 0
                 for item in GetSLData():
-                    newdata.insert(i+1+q,item+"\n")
-                    q = q + 1
+                    newdata.insert(i+1+q, item+"\n")
+                    q += 1
                 break
         for item in GetIDData():
             newdata.append(item+"\n")
@@ -68,7 +68,6 @@ def SetXorgConfig(value):
             for item in GetSLData():
                 newdata.append(item+"\n")
             newdata.append("EndSection\n")
-
 
     # Write the new file to a temporary directory
     f1 = open("/tmp/xorg.conf", 'w')
@@ -80,11 +79,10 @@ def SetXorgConfig(value):
     os.system("gksu cp /tmp/xorg.conf /etc/X11/xorg.conf")
 
 
-
 def CheckXorgConfig():
     # Checks for existance of a section using wacom driver
     # Does not check validity of configuration
-    State = 0	# 0=Unconfigured 1=Configured 2=Broken
+    State = 0  # 0=Unconfigured 1=Configured 2=Broken
     Devices = []
     CheckXorgConf()
     f1 = open("/etc/X11/xorg.conf", 'r')
@@ -92,7 +90,7 @@ def CheckXorgConfig():
     f1.close()
     for i in range(0,len(data)):
         line = data[i]
-        line = line.split("#")[0]	# Remove commenting
+        line = line.split("#")[0]  # Remove commenting
         if StdParse(line).count("section\"inputdevice\""):
             for subline in data[i+1:]:
                 if StdParse(subline).count("endsection"):
@@ -101,10 +99,10 @@ def CheckXorgConfig():
                     State = 1
                 if StdParse(subline).count("option\"type\""):
                     Devices.append(StdParse(subline).split("\"")[-2])
-    if State == 1:	# Check for presence of all listed devices in serverlayout section
-        for i in range(0,len(data)):
+    if State == 1:  # Check for presence of all listed devices in serverlayout section
+        for i in range(0, len(data)):
             line = data[i]
-            line = line.split("#")[0]	# Remove commenting
+            line = line.split("#")[0]  # Remove commenting
             if StdParse(line).count("section\"serverlayout\""):
                 for device in Devices:
                     Ok = 0
@@ -115,12 +113,12 @@ def CheckXorgConfig():
                             Ok = 1
                     if Ok == 0:
                         State = 2
+    return State, Devices
 
 
-    return State,Devices
-
-def StdParse(line):	# Format with no spaces, tabs, and double quotes only
+def StdParse(line):  # Format with no spaces, tabs, and double quotes only
     return line.replace(" ","").replace("\t","").replace("\'","\"").replace("\n","").lower()
+
 
 def CheckXorgConf():
     # If xorg.conf doesn't exist, create blank template
@@ -128,12 +126,13 @@ def CheckXorgConf():
     try:
         os.stat("/etc/X11/xorg.conf")
     except:
-        newdata = ["Section \"ServerLayout\"\n","EndSection"]
+        newdata = ["Section \"ServerLayout\"\n", "EndSection"]
         f1 = open("/tmp/xorg.conf", 'w')
         f1.writelines(newdata)
         f1.close()
         # Copy
         os.system("gksu cp /tmp/xorg.conf /etc/X11/xorg.conf")
+
 
 def GetSLData():
     return ["\tInputDevice   \"stylus\"  \"SendCoreEvents\"",\
